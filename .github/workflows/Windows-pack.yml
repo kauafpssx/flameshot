@@ -201,7 +201,9 @@ jobs:
 
   windows-release:
     name: Publish installable Windows release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      github.event_name == 'workflow_dispatch'
     needs: windows-pack
     runs-on: ubuntu-latest
     permissions:
