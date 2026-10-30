@@ -1,5 +1,8 @@
 name: Packaging(Windows)
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -195,3 +198,31 @@ jobs:
             ${{ github.workspace }}/build/Package/portable/flameshot-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip
             ${{ github.workspace }}/build/Package/portable/flameshot-${{ env.VERSION }}-${{ matrix.config.pak_arch }}.zip.sha256sum
           overwrite: true
+
+  windows-release:
+    name: Publish installable Windows release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: windows-pack
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: flameshot-*-artifact-win-*
+          path: packages
+          merge-multiple: true
+
+      - name: Publish GitHub pre-release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: fork-windows-${{ github.sha }}
+          name: Windows build ${{ github.sha }}
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            packages/*.msi
+            packages/*.msi.sha256sum
+            packages/*.zip
+            packages/*.zip.sha256sum

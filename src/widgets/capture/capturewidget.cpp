@@ -1143,15 +1143,8 @@ void CaptureWidget::wheelEvent(QWheelEvent* e)
      * */
     int toolSizeOffset = 0;
     if (qAbs(e->angleDelta().y()) >= MOUSE_WHEEL_TRESHOLD) {
-        auto const delta =
+        toolSizeOffset =
           qMax(qMin(e->angleDelta().y() / MOUSE_WHEEL_TRESHOLD, 1), -1);
-        if (activeButtonTool() &&
-            activeButtonTool()->handleMouseWheelEvent(
-              delta, m_adjustmentButtonPressed, m_context)) {
-            this->repaint();
-            return;
-        }
-        toolSizeOffset = delta;
     } else {
         // touchpad scroll
         qint64 current = QDateTime::currentMSecsSinceEpoch();
@@ -1165,6 +1158,18 @@ void CaptureWidget::wheelEvent(QWheelEvent* e)
         } else {
             return;
         }
+    }
+
+    const bool controlPressed =
+      e->modifiers().testFlag(Qt::ControlModifier) ||
+      m_adjustmentButtonPressed;
+    if (toolSizeOffset != 0 && activeButtonTool() &&
+        activeButtonTool()->handleMouseWheelEvent(
+          toolSizeOffset, controlPressed, m_context)) {
+        m_notifierBox->showMessage(QString::number(m_context.circleCount));
+        repaint();
+        e->accept();
+        return;
     }
 
     setToolSize(m_context.toolSize + toolSizeOffset);
